@@ -51,7 +51,7 @@ parfor i=1:size(L,1)*size(L,2) % loop over all z in L
     H_diag = -z*besselh(abs(ALPHA)-1,z*R)./besselh(abs(ALPHA),z*R);
     HH     = diag(H_diag);
         
-    % Finite element approximation for K:
+    % Finite element approximation for M_inner:
     u           = zeros(nC,N+1);
     S           = s-z^2*m;   % weak version of -Δ-z^2
     b           = -S*tu_D;
@@ -59,19 +59,18 @@ parfor i=1:size(L,1)*size(L,2) % loop over all z in L
     u           = u+tu_D;
 
     M_inner        = phi'*S*u;
-    K              = M_inner - NN/R;
-    A              = -P0 + 0.5*R*NN_inv*(HH+K)*NN_inv; % Final matrix (cf. (3.3))
-    Determinant(i) = det(eye(N+1)+A);
+    A = 0.5*(eye(N+1) - P0 + R*NN_inv*(HH + M_inner)*NN_inv);
+    Determinant(i) = det(A);
 end
 disp('Done!')
 toc
 %% Plot Results in complex plane:
 
 figure
-% Contour plot of log(|det(1+A)|):
+% Contour plot of log(|det(I+H+J+K)|):
 [Mat c] = contour(real(L), imag(L), log(abs(Determinant)), 70);
 colorbar;
-legend('log(|det(1+A)|)','Location','southwest');
+legend('log(|det(I+H+J+K)|)','Location','southwest');
 
 % Resonances are approximated by local minima of Determinant:
 Resonances = islocalmin(abs(Determinant),1) & islocalmin(abs(Determinant),2);
